@@ -1,58 +1,73 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
-```{r echo=FALSE}
-#supress warnings (otherwise warnings about missing data appear)
-options(warn=-1)
-library(plyr)
-library(dplyr)
-library(ggplot2)
 
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:plyr':
+## 
+##     arrange, count, desc, failwith, id, mutate, rename, summarise,
+##     summarize
+## 
+## The following object is masked from 'package:stats':
+## 
+##     filter
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
 ```
 
 ## Loading and preprocessing the data
-```{r, echo=TRUE}
+
+```r
 zip <- unz(description="./activity.zip",filename="activity.csv")
 dtable <- read.csv(zip)
 #change class of column date
 dtable$date <- as.Date(dtable$date)
-
 ```
 
 ## What is mean total number of steps taken per day?
-```{r, echo=TRUE}
+
+```r
 sumsperday <- ddply(dtable,"date",summarize,stepsum=sum(steps))
 
 ggplot(sumsperday, aes(x=date, y=stepsum))+
                                         geom_histogram(stat="identity")+
                                         labs(title="Steps per day",x="Date",y="Steps")
-                                          
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
+
+```r
 mn <- mean(sumsperday$stepsum,na.rm=TRUE)
 md <- median(sumsperday$stepsum,na.rm=TRUE)
 ```
-Mean number of steps per day: `r format(mn,digits=7)`, median number of steps per day: `r md`
+Mean number of steps per day: 10766.19, median number of steps per day: 10765
 
 ## What is the average daily activity pattern?
 
-```{r, echo=TRUE}
+
+```r
 dfbyint <- ddply(dtable,"interval",summarize,stepsMean=mean(steps,na.rm=TRUE))
 plot(dfbyint$interval,dfbyint$stepsMean,type="l", xlab="Intervals", ylab="Steps per interval of 5 min", main="Steps per interval")
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
+
+```r
 #interval with largest number of steps
 dfbyint_srtsteps<- arrange(dfbyint,desc(stepsMean))
 mxint<-dfbyint_srtsteps[1,"interval"]
 mxsteps<-dfbyint_srtsteps[1,"stepsMean"]
 ```
 
-Maximum number of steps per 5 minutes occur at interval `r mxint`, average number of steps at that interval is `r format(mxsteps,digits=6)`
+Maximum number of steps per 5 minutes occur at interval 835, average number of steps at that interval is 206.17
 
 ## Imputing missing values
-```{r, echo=TRUE}
+
+```r
 cntmissing<-nrow(dtable[!complete.cases(dtable),])
 
 #strategy to set missing values for 'steps': average for that interval. 
@@ -67,21 +82,26 @@ dfnomissingsum <- ddply(dfnomissing,"date",summarize,stepsum=sum(steps))
 ggplot(dfnomissingsum, aes(x=date, y=stepsum))+
                                             geom_histogram(stat="identity")+
                                             labs(title="Steps per day (no missing values)",x="Date",y="Steps")
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+
+```r
 #calc mean and median of total number of steps per day
 mnnomissing <- mean(dfnomissingsum$stepsum)
 mdnomissing <- median(dfnomissingsum$stepsum)
 ```
   
-Number of rows with missing values is `r cntmissing`  
-Mean of total number of steps per day is `r format(mnnomissing,digits=7)` (with missing values it was `r format(mn,digits=7)`)  
-Median of total number of steps per day is `r format(mdnomissing,digits=7)` (with missing values it was `r format(md,digits=7)`)  
+Number of rows with missing values is 2304  
+Mean of total number of steps per day is 10749.77 (with missing values it was 10766.19)  
+Median of total number of steps per day is 10641 (with missing values it was 10765)  
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r, echo=TRUE}
+
+```r
 #first add a column indicating if it is a weekend or weekday
-wknd<-which(weekdays(dfnomissing$date)=="sekmadienis" | weekdays(dfnomissing$date)=="ðeðtadienis")
-wd<-which(weekdays(dfnomissing$date)!="sekmadienis" & weekdays(dfnomissing$date)!="ðeðtadienis")
+wknd<-which(weekdays(dfnomissing$date)=="sekmadienis" | weekdays(dfnomissing$date)=="Å¡eÅ¡tadienis")
+wd<-which(weekdays(dfnomissing$date)!="sekmadienis" & weekdays(dfnomissing$date)!="Å¡eÅ¡tadienis")
 dfnomissing$wdwknd <-as.factor(x=c("weekend","weekday"))
 dfnomissing$wdwknd[wd]<-"weekday"
 dfnomissing$wdwknd[wknd]<-"weekend"
@@ -99,6 +119,11 @@ plot(df5meanbyint_wknd$interval,df5meanbyint_wknd$stepsMean,type="l",
                                                                 xlab="", 
                                                                 ylab="",
                                                                 main="Weekends")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
+
+```r
 par(mfrow=c(1,1))
 ```
 
